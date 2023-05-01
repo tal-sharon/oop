@@ -1,0 +1,47 @@
+talsharon
+315813980
+
+
+What is the strategy implemented by each 'smart' player?
+
+Clever:
+    Starts from (0,0) and advances forward through (0,1), (0,2) and so on
+        until reaches end of board ((size-1),(size-1)), and then goes back to (0,0).
+    This strategy overcomes the random player because it goes for filling an entire row as soon as possible.
+    If the chosen square is taken, skips it.
+    Doesn't restart his moves every game:
+        if last play on previous game was (x,y), then first play of the game after would be the next square.
+
+Genius:
+    Starts by filling the 2nd column (indexed 1),
+        and then goes by order over the rest of the board from end (((size-1),(size-1)) square) to start.
+    This strategy overcomes the clever player because it blocks his rows
+        and gets an advantage to start filling a column before clever fills a row.
+    If the chosen square is taken, skips it.
+    Restarts his moves every game.
+
+
+What is the advantage of a program design where all of the players classes share the same interface?
+    When a tournament and a game use two players of different types,
+    it does not effect the the class implementation of Tournament or Game because only the interface matters.
+    In addition, if we would like to add or remove types of players
+    we wouldn't have to change the non-Player classes.
+
+
+Clever VS Whatever | 10,000 rounds
+######### Results #########
+Player 1, clever won: 6936 rounds
+Player 2, whatever won: 3060 rounds
+Ties: 4
+
+Clever VS Genius | 10,000 rounds
+######### Results #########
+Player 1, clever won: 3333 rounds
+Player 2, genius won: 6667 rounds
+Ties: 0
+
+Whatever VS Whatever | 10,000 rounds
+######### Results #########
+Player 1, whatever won: 5039 rounds
+Player 2, whatever won: 4949 rounds
+Ties: 12

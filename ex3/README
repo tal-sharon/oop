@@ -1,0 +1,164 @@
+talsharon
+315813980
+
+=============================
+=      File description     =
+=============================
+
+src.BrickerGameManager.java - The game manager class: Contains the game's manager implementation
+    and the main method of the program. Initializes and runs the game itself and updates the frames.
+
+src.gameobjects.Ball.java - Implements the Ball class: The main ball of the game.
+src.gameobjects.Puck.java - Implements the Puck class: Subclass of Ball, used in a power-up.
+src.gameobjects.Brick.java - Implements the Brick class.
+src.gameobjects.CameraController.java - Implements the CameraController class: Used to control game's
+    camera for the 'camera power-up'.
+src.gameobjects.GraphicLifeCounter.java - Implements the GraphicLifeCounter class: Used to display the
+    amount of lives remains during the game graphically.
+src.gameobjects.NumericLifeCounter.java - Implements the NumericLifeCounter class: Used to display the
+    amount of lives remains during the game textually.
+src.gameobjects.BonusHeart.java - Implements the BonusHeart class: Used for the 'life power-up' purposes,
+    to gain extra bonus lives during the game.
+src.gameobjects.Paddle.java - Implements the Paddle class: The main paddle of the game.
+src.gameobjects.SecondaryPaddle.java - Implements the Ball class: Subclass of Paddle, used in a power-up.
+
+src.brick_strategies.CollisionStrategy.java - Implements the CollisionStrategy class: Used to determine
+    what happens after a brick is collided with.
+src.brick_strategies.PowerUpsStrategy.java - Implements the PowerUpStrategy class:
+    Subclass of CollisionStrategy. Holds Power-Ups and activates them when brick is collided with.
+
+src.power_ups.Activatable - Implements Activatable interface:
+                            A contract for the methods every Activatable class holds.
+src.power_ups.PuckPowerUp - Implements the PuckPowerUp class: A power-up which adds a ball-puck to the game.
+                            Implements Activatable interface.
+src.power_ups.PaddlePowerUp - Implements the  class: A power-up which adds a secondary paddle to the game.
+                              Implements Activatable interface.
+src.power_ups.LifePowerUp - Implements the  class: A power-up which releases a bonus life for the player.
+                            Implements Activatable interface.
+src.power_ups.CameraPowerUp - Implements the  class: A power-up which get the camera focused on the ball.
+                              Implements Activatable interface.
+
+
+=============================
+=          Design           =
+=============================
+
+Generally, most of the project is implemented by some kind of an unofficial observer design pattern.
+    The subject being the BrickerGameManger and the observers are the different game objects and
+    CameraController.
+
+Game-Objects -
+Except for the SecondaryPaddle, Puck and BonusHeart classes which gets on and off the game during a single
+    run, all of the other game objects are initialized at BrickerGameManager's initialization.
+    With this implementation there is no need to dispose and recreate different instances and only reset
+    their parameters or add and remove them from the Game's Object Collection when necessary.
+Regarding the SecondaryPaddle, Puck and BonusHeart classes, because they are connected with power-ups,
+    they can have multiple instances in different events in the game which is hard to manage with a single
+    initialization, therefore, each appearance is initialized and managed separately.
+I chose this design because it is similar to how I would imagine this game would be implemented in the real
+    world: A game or a game manger holds its game objects (ball, paddle, etc...) and different games can
+    have same kind of game objects as their own. In addition, some game objects can have multiple types,
+    Paddle and SecondaryPaddle, or Ball and Puck for example.
+
+Collisions-Strategy -
+The superclass CollisionsStrategy was implemented simply by the exercise's instruction.
+    The PowerUpsStrategy is a type of Collision strategy which inherits the simple act of removing the
+    brick from the game when a collision occurs. In addition, it enables a brick to hold multiple different
+    behaviours, or as I call them, Power-Ups, which are activated with the removal of the brick upon
+    collision. It does so by holding an ArrayList of PowerUps.
+I chose this design because, as I see it, a bricks strategy is weather it can hold power-ups or it cannot.
+    This way, if a brick can hold power-ups, this subclass of CollisionStrategy can manage those behaviours.
+
+Power-Ups -
+I Implemented a Activatable interface representing behaviours which affects the game directly:
+    pucks, secondary-paddle, extra-bonus life and camera movement.
+I chose to use an interface design because all the different power-ups share a mutual contract on being able
+    to be activated - they are all 'activatable'.
+    However, each one of them has different power and constructor suitable for their specific role.
+
+=============================
+=  Implementation issues   =
+=============================
+
+Activatable interface -
+I implemented an interface because all the different power-ups 'do the same things' or implements
+    the same methods by a mutual contract. Moreover, this implementation enables going through a Activatable
+    ArrayList and activate them one-by-one with simple code.
+
+PowerUpStrategy class -
+Using ArrayList to hold the power-ups - Easier to manage with unknown amount of power-up for each brick,
+    and easy way to hold multiple power-ups and iterate ove them for activation.
+
+Not implementing a 'Double Power Up' class -
+With my implementation there is no meaning to a 'Double Power Up' class because practically, it doesn't work
+    the way Activatable interface instructs and cannot be 'activated', when PowerUpStrategy activates all the
+    needed power-ups.
+    Instead, I implemented a logic of double power up behaviour to determine the amount of power-ups
+    each brick's strategy contains when I build it (as I will explain on the 'Answer to questions'
+    section below).
+
+Not implementing a 'Power Up Factory' -
+At first, I thought about coding a 'PowerUpFactory' class to build all the different power-up types.
+    While in the process, I noticed that because of the many differences in the power-ups' constructors,
+    creating a Factory would not make the code any more clean, therefore I decided to maintain the
+    initialization of the power-ups inside the BrickerGameManager class.
+
+public static final constants -
+    I used a few of these constants carefully throughout the project to pass constants like GameObject Tags.
+    Usage example:
+      " import src.gameobjects.Puck.PUCK_TAG
+        .
+        .
+        .
+        for (GameObject obj:gameObject) {
+            if (obj.getTag().equals(PUCK_TAG)) {
+                return true;
+        }
+        .
+        .
+        . "
+
+Pucks behaviour -
+    As permitted on the general forum of the exercise, I reduced the number of pucks generated from a brick
+    from 3 to 1 to avoid overloading the game with objects.
+
+=============================
+=    Answers to questions   =
+=============================
+
+1)
+When addressing the implementation of the different behaviours I understood that I need a single way to
+    build and control them. Therefore, to built them similarly and used a mutual interface, Activatable,
+    and to control them upon a brick collision I used strategy pattern and implemented a subclass of
+    CollisionStrategy, PowerUpStrategy, which activates each behaviour. This way if in the future someone
+    wishes to implement a CollisionStrategy which behaves differently he/she can use the superclass as base.
+    (My first intention was to use a strategy design pattern as we learnt it but, as I understood the
+        instructions, I couldn't change CollisionStrategy to be an interface or an abstract class).
+Each behaviour or as I called them, power-up, is implemented as a separated class.
+    Except for the double behaviour which is implemented through logic - explained below on section 3).
+
+2)
+As mentioned on section 1), I chose this design as I thought that it would be easier to manage the different
+    behaviours with unified tools, one to build and define them, the Activatable interface, and one to
+    control and activate them, the PowerUpStrategy.
+
+3)
+I implemented a recursive method of BrickerGameManager which is used during a single brick initialization.
+    The method holds a Power-Up counter which is increased with every call.
+If the counter equals or is greater than 3, the method doesn't generate a power-up.
+Else: generates a random power up out of 6 or 5 options.
+    The 6th option is a double power-up, and the first 5 options are: no power-up, and all the rest.
+If we generated one of the first 5, we return.
+Else: we generated a double power-up.
+    First, we increase the counter and call the method recursively with 5 options.
+    Secondly, we increase the counter again and make a recursive call with 6 options.
+With this implementation, when generating a double power-up we make sure that the first one is a 'real'
+    power-up and the second one can generate another double power-up which will result getting to the max.
+All in all, we can get up to 2 different 'real' power-ups, 3 with the double power-up.
+
+4)
+The design I chose to enable a brick to hold more than one behaviour or power-up is extending the
+    CollisionStrategy to a subclass called PowerUpStrategy which holds an ArrayList of Activatable instances.
+    The onCollision method is overridden and the new method calls the superclass's method to remove the
+    brick and than iterates over the ArrayList and activates all the power-ups.
+With this design, a brick can hold multiple behaviours, as many as an ArrayList can hold.

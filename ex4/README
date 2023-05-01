@@ -1,0 +1,192 @@
+talsharon
+315813980
+
+=============================
+=      File description     =
+=============================
+
+ascii_art.Driver.java - The Driver of the program, runs the shell,
+                        and contains the main method of the program.
+ascii_art.Shell.java - The programs Shell, is used to configure the program.
+
+ascii_art.img_to_char.BrightnessImgCharMatcher.java - The Image to Character matcher.
+ascii_art.img_to_char.BrightnessMap.java - A Singleton: The HashMap database storing character
+                                           brightness values.
+ascii_art.img_to_char.SubImageCache.java - A Cache object, storing used sub-images values.
+ascii_art.img_to_char.CharRenderer.java - Renders chars to boolean 2D arrays.
+
+image.Image.java - Image interface.
+image.FileImage.java - Implements Image interface, generates an Image from file.
+image.SubImage.java - Implements Image interface, a sub-image of an image.
+image.ImageIterableProperty.java - Implements Iterable, enables iterating over the image's pixels.
+                                   Contains an Iterator local class.
+image.SubImageIterable.java - Implements Iterable, enables iterating over sub-images of an image.
+                              Contains an Iterator local class.
+
+
+=============================
+=          Design           =
+=============================
+
+Note: For full explanation regarding the time and space complexity of the program,
+      see "Answers to questions" section below.
+
+The main purpose of the design is to make the program run efficiently both in time and in space complexity.
+    Primarily, doing so with a Singleton which stores the basic characters' brightness values
+    and a sub-image cache.
+
+Singleton - BrightnessMap
+    I implemented a Singleton design pattern to enable the Shell and the BrightnessImgCharMatcher to work
+        on the same database of characters' brightness values, which results saving space.
+    I addition, integrating a HashMap as the database is efficient in adding and getting keys and values
+        with O(1) runtime complexity.
+
+Cache - SubImageCache
+    I implemented a cache class which stores up to 12 different sub-image divisions greyscale values
+        by various resolutions. A sub-image division is stored only when rendered.
+    This implementation saves time when rendering a cached resolution.
+
+Polymorphism - Image interface
+    Using an Image interface allows performing the various actions of Image instances in different ways
+        according to the sub-class.
+    Moreover, it allows any Image instance to use the default methods of the interface such as the
+        divideIntoSubImages and the Iterators.
+
+Nested Classes - Iterator and Cache
+    When implementing the sub-images iterator I implemented an Iterable class and a local Iterator class
+        in the iterator method.
+    The cache's implementation uses static class as well, to implement a Node for its database.
+
+Composition -
+    Certain instances 'has an' object. For example:
+        Driver has a Shell
+        Shell has an Image
+        BrightnessImgCharMatcher has a SubImageCache
+
+
+=============================
+=  Implementation issues   =
+=============================
+
+Generally, there are a lot of ways to make runtime and space complexity more efficient, in most cases one
+    comes over another. I used multiple ways to make the program more efficient, below are explanations to
+    some of the issues I encountered through the process.
+
+BrightnessMap as a public static field of the Shell or the BrightnessImgCharMatcher -
+    Instead of using a Singleton pattern for the BrightnessMap I considered integrating it as a static field
+        inside one of the classed mentioned above. As I understood the database should be able to execute
+        more complex actions such as normalization I decided to implement it separately as a Singleton.
+
+Cache Capacity - (n x m) being the Image's dimensions
+    When determining the cache's capacity I was wondering if I should use a constant capacity resulting
+        (O(n*m) * Capacity) = O(n*m) space complexity or using a cache without capacity resulting
+        O(n*m*log(n*m)) space complexity because resolutions are powers of 2 and goes from 1 to O(n*m) so
+        the maximum number of different divisions is log(n*m).
+
+Optimizations -
+    I implemented optimizations in chooseChars method which uses the recent calculation if they weren't
+        effected by any changes.
+    It reuses the last normalized map if charSet is the same as last time, and if numCharsInRow didn't change
+        as well, it reuses the entire result.
+
+Parsing -
+    I considered implementing a Parser class for the Shell to use, but than I decided to leave this job for
+        the Shell itself, because it seemed like too many objects sharing not that much work.
+
+=============================
+=    Answers to questions   =
+=============================
+
+1) Time and Space Complexity - Main Points:
+    I chose to use a HashMap to store and map chars (keys) to their brightness value (double).
+        This Data Structure enables insertion and removal in O(1) time complexity.
+        Moreover, because the is a constant number of legal characters, space complexity is O(1).
+        Therefore, iterating over the whole map is O(1) as well.
+    I addition, I implemented a sub-image cache to store sub-image divisions of the Image when calculated
+        while rendering. This implementation saves time when a recent resolution is used.
+        The cache has a constant capacity of Image's different divisions to sub-images.
+    I used optimizations so if chooseChars is using the same chars as last time, it uses the same
+        normalization map. If using the same numOfChars too, just return the last result O(1).
+    In conclusion, for (n x m) being the image dimensions:
+        General space complexity is O(n*m)
+        Runtime complexity before render is O(1)
+        Runtime complexity of rendering is O(n*m).
+           If executing exact same render (resolution and chars one after another, the latter one is O(1).
+        Experiment which I conducted: Rendering an Image of size 2880 x 1620 pixels with 2048 resolution.
+            The average runtime (based on 1000 renders):
+                without cache:  0.529578154 seconds
+                using cache:    0.117267775 seconds
+
+
+a) Program's complexity before rendering:
+
+    I used a HashMap which is integrated inside the Singleton BrightnessMap class.
+    The BrightnessMap gets a char and maps it to its brightness value (not normalized).
+    The basic calculations which are not effected by rendering parameters are calculated in advance.
+    This map works as a database to save calculated values which can be used multiple times because once
+        a basic brightness value of a char is calculated it would never be calculated again. for example:
+            If the user removes a mapped char from the shell's char set, when adding it back the value is
+                still stored in the Brightness map and doesn't need to be calculated again.
+    Complexity Analysis:
+        Calculating the brightness value is a constant action because the char render resolution is always
+            16, therefore, using HashMap results the BrightnessMap insertion time complexity to be O(1).
+        The program works with constant number of legal chars and therefore the space complexity of the
+            BrightnessMap is O(1) as well.
+
+    In addition to the main map, the Shell holds a HashSet to maintain the current chars the user wants to
+        use in the render process. Again, using a HashSet results addition and removal of chars is O(1)
+        time complexity and O(1) space complexity.
+
+
+b) Rendering process:
+    The first step is generating a normalized map of chars and their brightness values. As mentioned above
+        this is O(1) time complexity because we already mapped the original brightness values and because
+        iterating over all the values is O(1) time complexity (constant number of legal chars).
+    The second step is devising the Image to SubImage's. In this process the program saves time by using
+        cache which saves the greyscale values of the last 12 sub-image divisions, each one with different
+        resolution.
+
+    Cache Example: Rendering an Image of size 2880 x 1620 pixels with 2048 resolution.
+        The average runtime (based on 1000 renders):
+            without cache:  0.529578154 seconds
+            using cache:    0.117267775 seconds
+    As seen on this mini-experiment's results using the SubImageCache reduces the runtime when running the
+        same render a second time by more than 75%.
+
+
+2)
+API: I'll answer for every one of the 4 stages described in the exercise's part A instructions.
+
+a) Padding the image -
+    This is done inside the FileImage's constructor with a private method.
+
+b) Sub-image division -
+    I implemented a SubImage which implements Image interface.
+    I implemented a default method of Image interface named divideToSubImages, which with a given sub-image
+        size, divides any object which implements Image to a 2D array of SubImage of the given size.
+    Each SubImage has a greyscale value.
+
+c) Determining ASCII brightness values -
+    I used a Singleton class BrightnessMap which store all the basic ASCII brightness values which are
+        calculated so the program doesn't have to calculate the same ASCII more than once.
+    Accessing the Singleton's HashMap which stores the data, is done with public getObject method which get
+        the Singleton's instance, and than using the get method to get a value of a char, or using add
+        method, to add a char to the map (The Singleton calculates and maps the char to it's
+        brightness value).
+    This class contains a normalizeMap public method generating a normalized map with a given set of chars.
+
+d) Converting an Image to ASCII Art -
+    A Driver class runs the program, and specifically, runs a Shell class.
+    The Shell interprets the user's input int commands and parameters and executes the program accordingly.
+    When rendering and converting an image to ASCII art, the Shell uses BrightnessToImgMatcher's chooseChar
+        public method, which uses the methods normalizeMap and divideToSubImages, and than goes over the
+        SubImages and matches them an ASCII value according to the normalized map and their greyscale value.
+
+
+3)
+Iterator:
+    I implemented the Iterator named subImages as a default method of Image interface.
+    Given a sub-image size, the method returns a new SubImageIterable which is implementing Iterable.
+        This iterable divides the Image to sub-images and it's iterator method returns a new Iterator which
+        is implemented as a nested local class implementing Iterator.
+    This implementation enables iterating over an Image's sub-images.
